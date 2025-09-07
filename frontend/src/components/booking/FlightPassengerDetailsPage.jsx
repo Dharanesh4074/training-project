@@ -1,0 +1,295 @@
+import React, { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import back_icon from '../../assets/back_icon.svg';
+import { bookFlightSeat } from '../../services/bookingServices';
+
+function FlightPassengerDetailsPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { flight, seats, userId, journyStartDate } = location.state || {};
+
+  const [passengers, setPassengers] = useState(
+    seats.map((seat) => ({
+      seatNumber: seat,
+      name: '',
+      age: '',
+      gender: '',
+      email: ''
+    }))
+  );
+
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentMode, setPaymentMode] = useState('upi');
+  const [paymentDetails, setPaymentDetails] = useState({
+    upiId: '',
+    cardNumber: '',
+    cardName: '',
+    expiryDate: '',
+    cvv: ''
+  });
+
+  const totalAmount = flight?.price * seats.length;
+
+  const handleChange = (index, field, value) => {
+    const updated = [...passengers];
+    updated[index][field] = value;
+    setPassengers(updated);
+  };
+
+  const validatePassengers = () => {
+    return passengers.every(
+      p =>
+        p.name &&
+        p.age > 0 &&
+        p.age < 100 &&
+        p.gender &&
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)
+    );
+  };
+
+  const handleConfirm = (e) => {
+    e.preventDefault();
+
+    if (!validatePassengers()) {
+      toast.error("Please fill all passenger details correctly.");
+      return;
+    }
+
+    setShowPayment(true);
+  };
+
+  const handleNavigate = () => {
+    navigate('/flights');
+  }
+
+  const handlePayment = async () => {
+    if (paymentMode === 'upi' && !paymentDetails.upiId.trim()) {
+      return toast.warn("Enter valid UPI ID.");
+    }
+
+    if (
+      paymentMode === 'card' &&
+      (
+        !paymentDetails.cardNumber.trim() ||
+        !paymentDetails.cardName.trim() ||
+        !paymentDetails.expiryDate.trim() ||
+        !paymentDetails.cvv.trim()
+      )
+    ) {
+      return toast.warn("Please fill all card details.");
+    }
+
+    const request = {
+      FlightId: flight.flightId,
+      UserId: userId,
+      JourneyStartTime: new Date(journyStartDate).toISOString(),
+      SeatNumbers: passengers.map(p => p.seatNumber),
+      Passengers: passengers.map(p => ({
+        Name: p.name,
+        Age: parseInt(p.age),
+        Gender: p.gender,
+        Email: p.email
+      }))
+    };
+
+    try {
+      const data = await bookFlightSeat(request);
+      toast.success("Flight booking & payment successful!");
+      setTimeout(() => {
+        navigate('/my-bookings');
+      }, 3000);
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message || "Booking failed.");
+    }
+  };
+
+  if (!flight || !seats || !userId) {
+    return (
+      <div className="container mt-4">
+        <p>Invalid booking data</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mt-4">
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+      <div style={{ display: "flex", justifyContent: "flex-start", gap: 20 }}>
+        <img src={back_icon} alt="Back" onClick={handleNavigate} style={{ cursor: "pointer" }} />
+        <h2>Passenger Details for Flight: {flight.flightName}</h2>
+      </div>
+
+      <form onSubmit={handleConfirm}>
+        {passengers.map((p, index) => (
+          <div key={index} className="card p-3 mb-3">
+            <h5 className="mb-3">Seat: {p.seatNumber}</h5>
+            <div className="row g-3">
+              <div className="col-md-3">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Name"
+                  value={p.name}
+                  onChange={(e) => handleChange(index, 'name', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="col-md-2">
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="Age"
+                  value={p.age}
+                  onChange={(e) => handleChange(index, 'age', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="col-md-3">
+                <select
+                  className="form-select"
+                  value={p.gender}
+                  onChange={(e) => handleChange(index, 'gender', e.target.value)}
+                  required
+                >
+                  <option value="">Select Gender</option>
+                  <option>Male</option>
+                  <option>Female</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div className="col-md-4">
+                <input
+                  type="email"
+                  className="form-control"
+                  placeholder="Email"
+                  value={p.email}
+                  onChange={(e) => handleChange(index, 'email', e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+        <button type="submit" className="btn btn-success w-100">Confirm Booking</button>
+      </form>
+
+      {showPayment && (
+        <div className="payment-modal">
+          <div className="payment-content">
+            <h4 className="mb-3">Choose Payment Method</h4>
+            <div className="mb-3">
+              <select
+                className="form-select"
+                value={paymentMode}
+                onChange={(e) => setPaymentMode(e.target.value)}
+              >
+                <option value="upi">UPI</option>
+                <option value="card">Card</option>
+              </select>
+            </div>
+
+            {paymentMode === 'upi' && (
+              <div className="mb-3">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Enter UPI ID"
+                  value={paymentDetails.upiId}
+                  onChange={(e) =>
+                    setPaymentDetails({ ...paymentDetails, upiId: e.target.value })
+                  }
+                />
+              </div>
+            )}
+
+            {paymentMode === 'card' && (
+              <>
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Card Number"
+                    value={paymentDetails.cardNumber}
+                    onChange={(e) =>
+                      setPaymentDetails({ ...paymentDetails, cardNumber: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Cardholder Name"
+                    value={paymentDetails.cardName}
+                    onChange={(e) =>
+                      setPaymentDetails({ ...paymentDetails, cardName: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Expiry Date (MM/YY)"
+                    value={paymentDetails.expiryDate}
+                    onChange={(e) =>
+                      setPaymentDetails({ ...paymentDetails, expiryDate: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="mb-3">
+                  <input
+                    type="password"
+                    className="form-control"
+                    placeholder="CVV"
+                    value={paymentDetails.cvv}
+                    onChange={(e) =>
+                      setPaymentDetails({ ...paymentDetails, cvv: e.target.value })
+                    }
+                  />
+                </div>
+              </>
+            )}
+
+            <button className="btn btn-primary w-100" onClick={handlePayment}>
+              Pay ₹{totalAmount.toFixed(2)}
+            </button>
+            <button
+              className="btn btn-outline-secondary mt-2 w-100"
+              onClick={() => setShowPayment(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        .payment-modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+        }
+        .payment-content {
+          background: white;
+          padding: 30px;
+          border-radius: 10px;
+          width: 400px;
+          max-width: 90%;
+        }
+      `}</style>
+    </div>
+  );
+}
+
+export default FlightPassengerDetailsPage;

@@ -1,0 +1,7 @@
+.custom-toast {
+  z-index: 99999 !important;
+}
+
+.cancel-btn-disabled{
+    background-color: #875454;
+}
