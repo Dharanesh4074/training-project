@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import ProviderIndex from '../provider/ProviderIndex';
 import { toast, ToastContainer } from 'react-toastify';
-
+import logo from '../../assets/destination.png'
 function Home() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [role, setRole] = useState(null);
@@ -89,10 +89,22 @@ function Home() {
     return (
         <div className="container-fluid">
             <ToastContainer position="top-right" autoClose={3000} className="custom-toast" />
-            <div className="bg-primary text-white p-4 mb-4">
-                <h1 className="text-center">Arise Your Journey </h1>
+            <div className="bg-primary text-white p-4 mb-4 position-relative d-flex align-items-center">
+                <img
+                    src={logo}
+                    alt="Arise Logo"
+                    style={{ height: '60px', marginRight: '20px' }}
+                />
+                <h1 style={{
+                    position: 'absolute',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    margin: 0,
+                    fontFamily: '"Cambria", serif'
+                }}>
+                    Arise Your Journey
+                </h1>
             </div>
-
             <div className="row">
                 <div className="col-md-3 mb-3">
                     {renderSidebar()}

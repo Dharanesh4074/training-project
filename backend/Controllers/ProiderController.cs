@@ -16,7 +16,7 @@ namespace backend.Controllers
         {
             _providerInterface = providerInterface;
         }
-        [Authorize(Roles = "Provider")]
+        // [Authorize(Roles = "Provider")]
         [HttpPost("addProviderDetails")]
         public IActionResult addProvider(ProviderDto _providerDetails)
         {

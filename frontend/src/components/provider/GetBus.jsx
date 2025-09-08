@@ -8,11 +8,20 @@ import back_icon from '../../assets/back_icon.svg';
 
 function GetBus() {
   const [buses, setBuses] = useState([]);
+  const [filteredBuses, setFilteredBuses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [providerId, setProviderId] = useState(null);
   const [editingBus, setEditingBus] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [filters, setFilters] = useState({
+    busName: '',
+    source: '',
+    destination: '',
+    departureDate: '',
+    arrivalDate: ''
+  });
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,6 +40,7 @@ function GetBus() {
     getBusesByProvider(id)
       .then((data) => {
         setBuses(data);
+        setFilteredBuses(data);
         setLoading(false);
       })
       .catch((error) => {
@@ -96,8 +106,44 @@ function GetBus() {
       toast.error(`Error: ${error.message}`);
     }
   };
+
   const handleNavigate = () => {
     navigate('/');
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    const updatedFilters = { ...filters, [name]: value };
+    setFilters(updatedFilters);
+    applyFilters(updatedFilters);
+  };
+
+  const applyFilters = (filtersToApply) => {
+    let filtered = buses.filter(bus => {
+      const depDate = new Date(bus.departureTime).toDateString();
+      const arrDate = new Date(bus.arrivalTime).toDateString();
+
+      return (
+        (!filtersToApply.busName || bus.busName.toLowerCase().includes(filtersToApply.busName.toLowerCase())) &&
+        (!filtersToApply.source || bus.source.toLowerCase().includes(filtersToApply.source.toLowerCase())) &&
+        (!filtersToApply.destination || bus.destination.toLowerCase().includes(filtersToApply.destination.toLowerCase())) &&
+        (!filtersToApply.departureDate || depDate === new Date(filtersToApply.departureDate).toDateString()) &&
+        (!filtersToApply.arrivalDate || arrDate === new Date(filtersToApply.arrivalDate).toDateString())
+      );
+    });
+
+    setFilteredBuses(filtered);
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      busName: '',
+      source: '',
+      destination: '',
+      departureDate: '',
+      arrivalDate: ''
+    });
+    setFilteredBuses(buses);
   };
 
   if (loading) return <div className="text-center mt-5">Loading buses...</div>;
@@ -105,16 +151,79 @@ function GetBus() {
   return (
     <div className="container-fluid p-3 bg-light text-primary">
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+
       <div style={{ display: "flex", justifyContent: "flex-start", gap: 10, alignItems: "center" }} className='mb-4'>
         <img src={back_icon} alt="Back" onClick={handleNavigate} style={{ cursor: "pointer" }} width={20} height={20} />
-        <h2 className="text-center text-primary">
-
-          Busses Added by You
-        </h2>
+        <h2 className="text-center text-primary">Buses Added by You</h2>
       </div>
+
+      <div className="bg-white border rounded p-3 mb-3">
+        <div className="row g-3">
+          <div className="col-md-2">
+            <label htmlFor="filterBusName" className="form-label">Bus Name</label>
+            <input
+              type="text"
+              name="busName"
+              className="form-control"
+              placeholder="Bus Name"
+              value={filters.busName}
+              onChange={handleFilterChange}
+            />
+          </div>
+          <div className="col-md-2">
+            <label htmlFor="filterSource" className="form-label">Source</label>
+            <input
+              type="text"
+              name="source"
+              className="form-control"
+              placeholder="Source"
+              value={filters.source}
+              onChange={handleFilterChange}
+            />
+          </div>
+          <div className="col-md-2">
+            <label htmlFor="filterDestination" className="form-label">Destination</label>
+            <input
+              type="text"
+              name="destination"
+              className="form-control"
+              placeholder="Destination"
+              value={filters.destination}
+              onChange={handleFilterChange}
+            />
+          </div>
+          <div className="col-md-2">
+            <label htmlFor="filterDepartureDate" className="form-label">Departure Date</label>
+            <input
+              type="date"
+              name="departureDate"
+              className="form-control"
+              value={filters.departureDate}
+              onChange={handleFilterChange}
+            />
+          </div>
+          <div className="col-md-2">
+            <label htmlFor="filterArrivalDate" className="form-label">Arrival Date</label>
+            <input
+              type="date"
+              name="arrivalDate"
+              className="form-control"
+              value={filters.arrivalDate}
+              onChange={handleFilterChange}
+            />
+          </div>
+          <div className="col-md-2 d-flex">
+            <label htmlFor="" className="invisible">cancel</label>
+            <button className="btn btn-secondary w-100" onClick={clearFilters}>
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-light p-3 rounded">
-        {buses.length === 0 ? (
-          <p>No buses found for provider ID {providerId}.</p>
+        {filteredBuses.length === 0 ? (
+          <p>No buses match the filter criteria.</p>
         ) : (
           <table className="table table-striped table-hover">
             <thead className="table-dark">
@@ -130,7 +239,7 @@ function GetBus() {
               </tr>
             </thead>
             <tbody>
-              {buses.map((bus) => (
+              {filteredBuses.map((bus) => (
                 <tr key={bus.busId}>
                   <td>{bus.busName}</td>
                   <td>{bus.busType.toUpperCase()}</td>
@@ -204,7 +313,6 @@ function GetBus() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

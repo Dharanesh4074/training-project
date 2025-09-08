@@ -13,6 +13,13 @@ function GetFlight() {
   const [editingFlight, setEditingFlight] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  const [filterSource, setFilterSource] = useState("");
+  const [filterDestination, setFilterDestination] = useState("");
+  const [filterDepartureDate, setFilterDepartureDate] = useState("");
+  const [filterArrivalDate, setFilterArrivalDate] = useState("");
+  const [filterBusName, setFilterBusName] = useState("");
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -96,24 +103,119 @@ function GetFlight() {
       toast.error(`Error: ${error.message}`);
     }
   };
+
   const handleNavigate = () => {
     navigate('/');
   };
+
+  const clearFilters = () => {
+    setFilterSource("");
+    setFilterDestination("");
+    setFilterDepartureDate("");
+    setFilterArrivalDate("");
+    setFilterBusName("");
+  };
+
+  const filteredFlights = flights.filter((flight) => {
+    const sourceMatch = filterSource
+      ? flight.source.toLowerCase().includes(filterSource.toLowerCase())
+      : true;
+
+    const destinationMatch = filterDestination
+      ? flight.destination.toLowerCase().includes(filterDestination.toLowerCase())
+      : true;
+
+    const departureDateMatch = filterDepartureDate
+      ? new Date(flight.departureTime).toISOString().slice(0, 10) === filterDepartureDate
+      : true;
+
+    const arrivalDateMatch = filterArrivalDate
+      ? new Date(flight.arrivalTime).toISOString().slice(0, 10) === filterArrivalDate
+      : true;
+
+    const busNameMatch = filterBusName
+      ? flight.flightName.toLowerCase().includes(filterBusName.toLowerCase())
+      : true;
+
+    return sourceMatch && destinationMatch && departureDateMatch && arrivalDateMatch && busNameMatch;
+  });
+
   if (loading) return <div className="text-center mt-5">Loading flights...</div>;
 
   return (
     <div className="container-fluid p-3 bg-light text-primary">
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+
       <div style={{ display: "flex", justifyContent: "flex-start", gap: 10, alignItems: "center" }} className='mb-4'>
         <img src={back_icon} alt="Back" onClick={handleNavigate} style={{ cursor: "pointer" }} width={20} height={20} />
-        <h2 className="text-center text-primary">
-
-          Flights Added by You
-        </h2>
+        <h2 className="text-center text-primary">Flights Added by You</h2>
       </div>
+
+      <div className="bg-white p-3 rounded mb-3">
+        <div className="row g-3 align-items-end">
+          <div className="col-md-2">
+            <label htmlFor="filterBusName" className="form-label">Flight Name</label>
+            <input
+              id="filterBusName"
+              type="text"
+              className="form-control"
+              value={filterBusName}
+              onChange={(e) => setFilterBusName(e.target.value)}
+              placeholder="Enter bus name"
+            />
+          </div>
+          <div className="col-md-2">
+            <label htmlFor="filterSource" className="form-label">Source</label>
+            <input
+              id="filterSource"
+              type="text"
+              className="form-control"
+              value={filterSource}
+              onChange={(e) => setFilterSource(e.target.value)}
+              placeholder="Enter source"
+            />
+          </div>
+          <div className="col-md-2">
+            <label htmlFor="filterDestination" className="form-label">Destination</label>
+            <input
+              id="filterDestination"
+              type="text"
+              className="form-control"
+              value={filterDestination}
+              onChange={(e) => setFilterDestination(e.target.value)}
+              placeholder="Enter destination"
+            />
+          </div>
+          <div className="col-md-2">
+            <label htmlFor="filterDepartureDate" className="form-label">Departure Date</label>
+            <input
+              id="filterDepartureDate"
+              type="date"
+              className="form-control"
+              value={filterDepartureDate}
+              onChange={(e) => setFilterDepartureDate(e.target.value)}
+            />
+          </div>
+          <div className="col-md-2">
+            <label htmlFor="filterArrivalDate" className="form-label">Arrival Date</label>
+            <input
+              id="filterArrivalDate"
+              type="date"
+              className="form-control"
+              value={filterArrivalDate}
+              onChange={(e) => setFilterArrivalDate(e.target.value)}
+            />
+          </div>
+          <div className="col-md-2 d-flex justify-content-start">
+            <label htmlFor="" className="invisible">cancel</label>
+            <button className="btn btn-secondary" onClick={clearFilters}>Cancel Filters</button>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-light p-3 rounded">
-        {flights.length === 0 ? (
-          <p>No flights found for provider ID {providerId}.</p>
+        {filteredFlights.length === 0 ? (
+          <p>No flights found matching your criteria.</p>
         ) : (
           <table className="table table-striped table-hover">
             <thead className="table-dark">
@@ -129,7 +231,7 @@ function GetFlight() {
               </tr>
             </thead>
             <tbody>
-              {flights.map((flight) => (
+              {filteredFlights.map((flight) => (
                 <tr key={flight.flightId}>
                   <td>{flight.flightName}</td>
                   <td>{flight.flightType.toUpperCase()}</td>

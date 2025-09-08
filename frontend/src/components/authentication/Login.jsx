@@ -13,6 +13,7 @@ function Login() {
     localStorage.removeItem('token');
     localStorage.removeItem('providerId');
     localStorage.removeItem('userId');
+    toast.dismiss();
   }, []);
 
   const handleLogin = async (e) => {
@@ -28,9 +29,11 @@ function Login() {
       if (result.userId) {
         localStorage.setItem("userId", result.userId);
       }
-
+      if(result.message == "User not found or invalid credentials."){
+        toast.error(result.message);
+      }else{
       toast.success(result.message);
-      setTimeout(() => navigate('/'), 3000);
+      setTimeout(() => navigate('/'), 3000);}
     } catch (error) {
       toast.error('Login failed: ' + error.message);
     }

@@ -3,7 +3,7 @@ import {
   getFlightBookings,
   getTrainBookings,
   getBusBookings,
-  cancelBooking
+  cancelBooking,
 } from '../../services/bookingServices';
 import { generateBookingTicketPDF } from '../../utils/TicketDownload';
 import { useNavigate } from 'react-router-dom';
@@ -20,6 +20,9 @@ function MyBookings() {
 
   const [showModal, setShowModal] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState(null);
+
+  const [filterDate, setFilterDate] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
 
   const userId = localStorage.getItem('userId');
   const navigate = useNavigate();
@@ -54,13 +57,45 @@ function MyBookings() {
     fetchBookings();
   }, [transportType, userId, reload]);
 
-  const currentBookings =
-    (transportType === 'flight'
-      ? flightBookings
-      : transportType === 'train'
-        ? trainBookings
-        : busBookings)?.slice().reverse() || [];
+  const getJourneyStatus = (journeyStart) => {
+    const journeyDate = new Date(journeyStart);
+    const today = new Date();
 
+    journeyDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    if (journeyDate.getTime() === today.getTime()) {
+      return 'Today';
+    } else if (journeyDate > today) {
+      return 'Upcoming';
+    } else {
+      return 'Completed';
+    }
+  };
+
+  const getJourneyBadgeClass = (journeyStart) => {
+    const status = getJourneyStatus(journeyStart);
+
+    switch (status) {
+      case 'Today':
+        return 'bg-success';
+      case 'Upcoming':
+        return 'bg-warning text-dark';
+      case 'Completed':
+        return 'bg-danger';
+      default:
+        return 'bg-secondary';
+    }
+  };
+
+  const canCancelBooking = (journeyDateStr) => {
+    if (!journeyDateStr) return false;
+    const journeyDate = new Date(journeyDateStr);
+    const today = new Date();
+    const diffTime = journeyDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 2;
+  };
 
   const handleDownload = (booking) => {
     generateBookingTicketPDF(booking, transportType);
@@ -82,7 +117,7 @@ function MyBookings() {
     toast.success(result.message);
 
     if (result.success) {
-      setReload(prev => !prev);
+      setReload((prev) => !prev);
     }
 
     setShowModal(false);
@@ -94,37 +129,94 @@ function MyBookings() {
     setSelectedBookingId(null);
   };
 
-  const canCancelBooking = (journeyDateStr) => {
-    if (!journeyDateStr) return false;
-    const journeyDate = new Date(journeyDateStr);
-    const today = new Date();
-    const diffTime = journeyDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays > 2;
+  const allBookings =
+    transportType === 'flight'
+      ? flightBookings
+      : transportType === 'train'
+        ? trainBookings
+        : busBookings;
+
+  const currentBookings = allBookings
+    .filter((booking) => {
+      const journeyStart =
+        booking.JourneyStartTime || booking.JourneyStartDate || booking.JourneyDate;
+      const journeyDate = new Date(journeyStart);
+      journeyDate.setHours(0, 0, 0, 0);
+
+      const matchesDate = filterDate
+        ? journeyDate.getTime() === new Date(filterDate).setHours(0, 0, 0, 0)
+        : true;
+
+      const matchesStatus = filterStatus
+        ? getJourneyStatus(journeyStart) === filterStatus
+        : true;
+
+      return matchesDate && matchesStatus;
+    })
+    .slice()
+    .reverse();
+
+  const clearFilters = () => {
+    setFilterDate('');
+    setFilterStatus('');
   };
 
   return (
     <div className="container-fluid mt-3">
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
-      <div style={{ display: "flex", justifyContent: "flex-start", gap: 20 }}>
-        <img src={back_icon} alt="Back" onClick={handleNavigate} style={{ cursor: "pointer" }} />
+      <div style={{ display: 'flex', justifyContent: 'flex-start', gap: 20 }}>
+        <img
+          src={back_icon}
+          alt="Back"
+          onClick={handleNavigate}
+          style={{ cursor: 'pointer' }}
+        />
         <h2 className="text-primary">My Bookings</h2>
       </div>
 
-      <div className="form-group mb-4">
-        <label htmlFor="transportType" className="form-label fw-bold">
-          Transport Type:
-        </label>
-        <select
-          id="transportType"
-          className="form-select"
-          value={transportType}
-          onChange={(e) => setTransportType(e.target.value)}
-        >
-          <option value="flight">Flight</option>
-          <option value="train">Train</option>
-          <option value="bus">Bus</option>
-        </select>
+      <div className="row mb-4 mt-3">
+        <div className="col-md-3">
+          <label className="form-label fw-bold">Transport Type:</label>
+          <select
+            className="form-select"
+            value={transportType}
+            onChange={(e) => setTransportType(e.target.value)}
+          >
+            <option value="flight">Flight</option>
+            <option value="train">Train</option>
+            <option value="bus">Bus</option>
+          </select>
+        </div>
+
+        <div className="col-md-3">
+          <label className="form-label fw-bold">Journey Date:</label>
+          <input
+            type="date"
+            className="form-control"
+            value={filterDate}
+            onChange={(e) => setFilterDate(e.target.value)}
+          />
+        </div>
+
+        <div className="col-md-3">
+          <label className="form-label fw-bold">Status:</label>
+          <select
+            className="form-select"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="">-- All --</option>
+            <option value="Today">Today</option>
+            <option value="Upcoming">Upcoming</option>
+            <option value="Completed">Completed</option>
+          </select>
+        </div>
+
+        <div className="col-md-3 d-flex align-items-end">
+          <button className="btn btn-secondary w-100" onClick={clearFilters}>
+            Cancel Filters
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -155,7 +247,8 @@ function MyBookings() {
                   booking.BusPassengers ||
                   [];
 
-                const journeyStart = booking.JourneyStartTime || booking.JourneyStartDate || booking.JourneyDate;
+                const journeyStart =
+                  booking.JourneyStartTime || booking.JourneyStartDate || booking.JourneyDate;
 
                 const isCancelable = canCancelBooking(journeyStart);
 
@@ -182,22 +275,24 @@ function MyBookings() {
                     {j === 0 && (
                       <>
                         <td rowSpan={passengers.length}>
-                          {new Date(journeyStart).toLocaleDateString()}
+                          {new Date(journeyStart).toLocaleDateString()}{' '}
+                          <span className={`badge ${getJourneyBadgeClass(journeyStart)}`}>
+                            {getJourneyStatus(journeyStart)}
+                          </span>
                         </td>
                         <td rowSpan={passengers.length}>
                           <button
                             className={`btn btn-sm ${!isCancelable ? 'btn-danger' : 'btn-outline-danger'}`}
                             disabled={!isCancelable}
                             onClick={() => {
-                              // confirmCancelBooking(booking.BookingId || booking.Id);
                               if (!isCancelable) {
-                                toast.error("Cancellation not allowed within 2 days of journey.");
+                                toast.error('Cancellation not allowed within 2 days of journey.');
                               } else {
                                 confirmCancelBooking(booking.BookingId || booking.Id);
                               }
                             }}
                           >
-                            {!isCancelable ? "Cancel Date Expired or Ended" : "Cancel"}
+                            {!isCancelable ? 'Cancel Date Expired or Ended' : 'Cancel'}
                           </button>
                         </td>
                         <td rowSpan={passengers.length}>
@@ -227,7 +322,8 @@ function MyBookings() {
         <div
           style={{
             position: 'fixed',
-            top: 0, left: 0,
+            top: 0,
+            left: 0,
             width: '100%',
             height: '100%',
             backgroundColor: 'rgba(0,0,0,0.5)',
@@ -248,7 +344,13 @@ function MyBookings() {
             }}
           >
             <h5>Are you sure you want to cancel this booking?</h5>
-            <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-around' }}>
+            <div
+              style={{
+                marginTop: 20,
+                display: 'flex',
+                justifyContent: 'space-around',
+              }}
+            >
               <button className="btn btn-danger" onClick={executeCancel}>
                 Yes
               </button>

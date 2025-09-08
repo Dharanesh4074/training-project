@@ -544,15 +544,26 @@ namespace backend.Services
 
         public IEnumerable<FlightModel> GetFlightsForUsers()
         {
-            return _context.flightModel.ToList();
+            var today = DateTime.Today;
+            return _context.flightModel
+            .Where(b => b.DepartureTime >= today)
+            .ToList();
         }
         public IEnumerable<BusModel> GetBusesForUsers()
         {
-            return _context.busModel.ToList();
+            var today = DateTime.Today;
+            return _context.busModel
+                .Where(b => b.DepartureTime >= today)
+                .ToList();
         }
+
         public IEnumerable<TrainModel> GetTrainsForUsers()
         {
-            return _context.trainModel.ToList();
+            var today = DateTime.Today;
+            return _context.trainModel
+                .Where(b => b.DepartureTime >= today)
+                .ToList();
         }
+
     }
 }

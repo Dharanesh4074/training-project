@@ -14,12 +14,20 @@ import back_icon from '../../assets/back_icon.svg';
 function ProviderViewBookings() {
   const [transportType, setTransportType] = useState('bus');
   const [bookings, setBookings] = useState([]);
+  const [filteredBookings, setFilteredBookings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [providerId, setProviderId] = useState(null);
   const [error, setError] = useState(null);
+  const [filterDeparture, setFilterDeparture] = useState('');
+  const [filterArrival, setFilterArrival] = useState('');
 
   const [selectedBookingDetails, setSelectedBookingDetails] = useState(null);
   const [showModal, setShowModal] = useState(false);
+
+  const [filterFrom, setFilterFrom] = useState('');
+  const [filterTo, setFilterTo] = useState('');
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const storedId = localStorage.getItem('providerId');
@@ -35,6 +43,10 @@ function ProviderViewBookings() {
       fetchBookings();
     }
   }, [transportType, providerId]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [bookings, filterFrom, filterTo]);
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -56,6 +68,20 @@ function ProviderViewBookings() {
     }
   };
 
+  const applyFilters = () => {
+    const filtered = bookings.filter((item) => {
+      const fromMatch = item.source.toLowerCase().includes(filterFrom.toLowerCase());
+      const toMatch = item.destination.toLowerCase().includes(filterTo.toLowerCase());
+      return fromMatch && toMatch;
+    });
+    setFilteredBookings(filtered);
+  };
+
+  const clearFilters = () => {
+    setFilterFrom('');
+    setFilterTo('');
+  };
+
   const handleViewBookings = async (transportId) => {
     try {
       const data = await getBookingSummary(transportId, transportType);
@@ -71,38 +97,69 @@ function ProviderViewBookings() {
       dateStyle: 'medium',
       timeStyle: 'short',
     });
-  const navigate = useNavigate();
+
   const handleNavigate = () => {
     navigate('/');
-  }
+  };
+
   return (
     <div className="container-fluid mt-4">
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
-      <div style={{ display: "flex", justifyContent: "flex-start", gap: 10, alignItems: "center" }} className='mb-4'>
-        <img src={back_icon} alt="Back" onClick={handleNavigate} style={{ cursor: "pointer" }} width={20} height={20} />
+      <div style={{ display: 'flex', justifyContent: 'flex-start', gap: 10, alignItems: 'center' }} className="mb-4">
+        <img src={back_icon} alt="Back" onClick={handleNavigate} style={{ cursor: 'pointer' }} width={20} height={20} />
         <h2 className="text-center text-primary">
-
           Provider Booking Dashboard | View and manage your transport bookings
         </h2>
       </div>
 
-      <div className="mb-4">
-        <label className="form-label fw-bold">Select Transport Type:</label>
-        <select
-          className="form-select w-auto"
-          value={transportType}
-          onChange={(e) => setTransportType(e.target.value)}
-        >
-          <option value="bus">Bus</option>
-          <option value="train">Train</option>
-          <option value="flight">Flight</option>
-        </select>
+      <div className="row g-3 align-items-end mb-4">
+        <div className="col-md-3">
+          <label className="form-label fw-bold">Transport Type:</label>
+          <select
+            className="form-select"
+            value={transportType}
+            onChange={(e) => setTransportType(e.target.value)}
+          >
+            <option value="bus">Bus</option>
+            <option value="train">Train</option>
+            <option value="flight">Flight</option>
+          </select>
+        </div>
+
+        <div className="col-md-3">
+          <label className="form-label fw-bold">From (Source):</label>
+          <input
+            type="text"
+            className="form-control"
+            value={filterFrom}
+            onChange={(e) => setFilterFrom(e.target.value)}
+            placeholder="Enter source"
+          />
+        </div>
+
+        <div className="col-md-3">
+          <label className="form-label fw-bold">To (Destination):</label>
+          <input
+            type="text"
+            className="form-control"
+            value={filterTo}
+            onChange={(e) => setFilterTo(e.target.value)}
+            placeholder="Enter destination"
+          />
+        </div>
+
+        <div className="col-md-3">
+          <label htmlFor="" className="invisible">cancel</label>
+          <button className="btn btn-secondary w-100" onClick={clearFilters}>
+            Clear Filters
+          </button>
+        </div>
       </div>
 
       {loading && <div className="text-center mt-4">Loading bookings...</div>}
       {error && <div className="alert alert-danger">{error}</div>}
 
-      {!loading && bookings.length > 0 && (
+      {!loading && filteredBookings.length > 0 && (
         <div className="table-responsive">
           <table className="table table-bordered table-striped shadow-sm">
             <thead className="table-primary text-center">
@@ -119,7 +176,7 @@ function ProviderViewBookings() {
               </tr>
             </thead>
             <tbody>
-              {bookings.map((item) => {
+              {filteredBookings.map((item) => {
                 const selected =
                   selectedBookingDetails?.transportId === item[`${transportType}Id`];
                 const revenue =
@@ -198,9 +255,9 @@ function ProviderViewBookings() {
         </div>
       )}
 
-      {!loading && bookings.length === 0 && (
+      {!loading && filteredBookings.length === 0 && (
         <div className="alert alert-info">
-          No {transportType} bookings found for provider ID {providerId}.
+          No matching {transportType} bookings found for provider ID {providerId}.
         </div>
       )}
 
@@ -226,7 +283,7 @@ function ProviderViewBookings() {
               <div className="modal-body">
                 {(() => {
                   const matched = bookings.find(
-                    b => b[`${transportType}Id`] === selectedBookingDetails.transportId
+                    (b) => b[`${transportType}Id`] === selectedBookingDetails.transportId
                   );
                   const revenue =
                     matched && selectedBookingDetails

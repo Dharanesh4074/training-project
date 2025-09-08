@@ -9,7 +9,7 @@ function NotFound() {
       navigate('/');
     }, 3000);
 
-    return () => clearTimeout(timer); // Cleanup on unmount
+    return () => clearTimeout(timer);
   }, [navigate]);
 
   return (

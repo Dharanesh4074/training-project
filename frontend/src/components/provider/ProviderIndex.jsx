@@ -1,40 +1,43 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import bus_logo from '../../assets/bus.svg';
+import flight_logo from '../../assets/flight.svg';
+import train_logo from '../../assets/train.svg';
 
 const options = [
   {
     label: 'Add Train',
-    image: 'https://img.icons8.com/ios-filled/100/000000/train.png',
+    image: train_logo,
     description: 'Add new train details and schedules.',
     path: '/add-train',
   },
   {
     label: 'Add Bus',
-    image: 'https://img.icons8.com/ios-filled/100/000000/bus.png',
+    image: bus_logo,
     description: 'Add new bus details and routes.',
     path: '/add-bus',
   },
   {
     label: 'Add Flight',
-    image: 'https://img.icons8.com/ios-filled/100/000000/airplane-take-off.png',
+    image: flight_logo,
     description: 'Add new flight details and timings.',
     path: '/add-flight',
   },
   {
     label: 'Get Train',
-    image: 'https://img.icons8.com/ios-filled/100/000000/train.png',
+    image: train_logo,
     description: 'Get train details and schedules.',
     path: '/get-train',
   },
   {
     label: 'Get Bus',
-    image: 'https://img.icons8.com/ios-filled/100/000000/bus.png',
+    image: bus_logo,
     description: 'Get bus details and routes.',
     path: '/get-bus',
   },
   {
     label: 'Get Flight',
-    image: 'https://img.icons8.com/ios-filled/100/000000/airplane-take-off.png',
+    image: flight_logo,
     description: 'Get flight details and timings.',
     path: '/get-flight',
   },

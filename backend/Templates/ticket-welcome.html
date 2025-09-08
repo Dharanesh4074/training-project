@@ -3,18 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <title>Welcome to Ticket Booking Agency</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            padding: 30px;
+            border-radius: 8px;
+        }
+        h2 {
+            color: #28a745;
+        }
+        p {
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #999;
+            text-align: center;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
 </head>
-<body style="font-family: Arial, sans-serif;">
-    <h2>Hello Provider,</h2>
-    <p>Your provider account has been <strong>approved</strong>.</p>
+<body>
+    <div class="container">
+        <h2>Dear {Email},</h2>
+        <p>We’re excited to let you know that your provider account has been <strong>approved</strong>.</p>
 
-    <p><strong>Email:</strong> {Email}</p>
-    <p><strong>Password:</strong> {Password}</p>
+        <p><strong>Email:</strong> {Email}</p>
+        <p><strong>Password:</strong> {Password}</p>
 
-    <p>You can log in using the link below:</p>
-    <a href="{LoginUrl}">Login to your account</a>
-    <p><strong>Note:</strong> Once you get login change your Password</p>
-    <br><br>
-    <p>Thank you,<br>The Ticket Booking Agency Team</p>
+        <p>You can now log in using the link below:</p>
+        <p><a href="{LoginUrl}">Login to your account</a></p>
+
+        <p><strong>Note:</strong> Please make sure to change your password after your first login.</p>
+
+        <p>Welcome aboard!<br>The Ticket Booking Agency Team</p>
+
+        <hr>
+        <p class="footer">
+            Visit us at <a href="https://ticketbookingagency.com/login">https://ticketbookingagency.com/login</a>
+        </p>
+    </div>
 </body>
 </html>

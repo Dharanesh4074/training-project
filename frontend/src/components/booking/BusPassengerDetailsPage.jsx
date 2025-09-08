@@ -59,10 +59,46 @@ function BusPassengerDetailsPage() {
       return toast.warn("Enter UPI ID.");
     }
 
-    if (paymentMethod === 'card' && (!paymentDetails.cardNumber || !paymentDetails.cardName || !paymentDetails.expiryDate || !paymentDetails.cvv)) {
-      return toast.warn("Please fill all card details.");
-    }
+    if (paymentMethod === 'card') {
+      const { cardNumber, cardName, expiryDate, cvv } = paymentDetails;
 
+      if (!cardNumber || !cardName || !expiryDate || !cvv) {
+        return toast.warn("Please fill all card details.");
+      }
+
+      const cardNumberClean = cardNumber.replace(/\s+/g, '');
+      if (!/^\d{13,19}$/.test(cardNumberClean)) {
+        return toast.warn("Please enter a valid card number.");
+      }
+
+      if (!/^[a-zA-Z\s]+$/.test(cardName)) {
+        return toast.warn("Please enter a valid cardholder name.");
+      }
+
+      const expiryMatch = expiryDate.match(/^(\d{2})\/(\d{2})$/);
+      if (!expiryMatch) {
+        return toast.warn("Please enter a valid expiry date (MM/YY).");
+      } else {
+        const [_, month, year] = expiryMatch;
+        const currentDate = new Date();
+        const currentYear = parseInt(currentDate.getFullYear().toString().slice(-2));
+        const currentMonth = currentDate.getMonth() + 1;
+        const inputMonth = parseInt(month);
+        const inputYear = parseInt(year);
+
+        if (inputMonth < 1 || inputMonth > 12) {
+          return toast.warn("Invalid expiry month.");
+        }
+
+        if (inputYear < currentYear || (inputYear === currentYear && inputMonth < currentMonth)) {
+          return toast.warn("Card has expired.");
+        }
+      }
+
+      if (!/^\d{3,4}$/.test(cvv)) {
+        return toast.warn("Please enter a valid CVV.");
+      }
+    }
 
     const payload = {
       userId,

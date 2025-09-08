@@ -7,6 +7,7 @@ import back_icon from '../../assets/back_icon.svg';
 function GetAllUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filterEmail, setFilterEmail] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -37,50 +38,93 @@ function GetAllUsers() {
 
   const handleNavigate = () => {
     navigate('/');
-  }
+  };
+
+  const clearFilter = () => {
+    setFilterEmail('');
+  };
+
+  const filteredUsers = users.filter((user) =>
+    user.email.toLowerCase().includes(filterEmail.toLowerCase())
+  );
 
   return (
-    <div className="container-fluid">
-      <div style={{ display: "flex", gap: 10, justifyContent: "flex-start", alignItems: "center" }} className='p-3'>
-        <img src={back_icon} alt="Back" onClick={handleNavigate} style={{ cursor: "pointer" }} width={20} height={20} />
-        <h2 className="text-center text-primary">
+    <div className="container-fluid mt-5">
+      <div className="card shadow-sm border-primary">
+        <div className="p-3 d-flex align-items-center gap-2">
+          <img
+            src={back_icon}
+            alt="Back"
+            onClick={handleNavigate}
+            style={{ cursor: 'pointer' }}
+            width={20}
+            height={20}
+          />
+          <h2 className="text-center text-primary">Arise - All Users</h2>
+        </div>
 
-          Arise - All Users
-        </h2>
+        <div className="card-body">
+          <div className="row mb-3 px-2">
+            <div className="col-md-4">
+              <label htmlFor="emailFilter" className="form-label">Filter by Email</label>
+              <input
+                type="text"
+                className="form-control"
+                id="emailFilter"
+                placeholder="Enter email"
+                value={filterEmail}
+                onChange={(e) => setFilterEmail(e.target.value)}
+              />
+            </div>
+            <div className="col-md-2 d-flex align-items-end">
+              <button className="btn btn-secondary w-100" onClick={clearFilter}>
+                Cancel Filter
+              </button>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="text-center">
+              <div className="spinner-border text-primary" role="status" />
+              <p className="mt-2">Loading...</p>
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <p className="text-center">No users found.</p>
+          ) : (
+            <div className="table-responsive">
+              <table className="table table-bordered table-hover">
+                <thead className="table-primary text-center align-middle">
+                  <tr>
+                    <th>ID</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="text-center align-middle">
+                  {filteredUsers.map((user) => (
+                    <tr key={user.userId}>
+                      <td>{user.userId}</td>
+                      <td>{user.email}</td>
+                      <td>{user.phono}</td>
+                      <td>{getRoleLabel(user.role)}</td>
+                      <td>
+                        <button
+                          className="btn btn-sm btn-primary"
+                          onClick={() => handleViewBookings(user.userId)}
+                        >
+                          View Bookings
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <table className="table table-bordered mt-3">
-          <thead className="table-primary">
-            <tr>
-              <th>ID</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Role</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.userId}>
-                <td>{user.userId}</td>
-                <td>{user.email}</td>
-                <td>{user.phono}</td>
-                <td>{getRoleLabel(user.role)}</td>
-                <td>
-                  <button
-                    className="btn btn-primary btn-sm"
-                    onClick={() => handleViewBookings(user.userId)}
-                  >
-                    View Bookings
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
     </div>
   );
 }

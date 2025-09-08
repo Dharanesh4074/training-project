@@ -164,3 +164,4 @@ C:\Users\dharanesh.r\Desktop\Ticket-Booking\backend\obj\Debug\net9.0\refint\back
 C:\Users\dharanesh.r\Desktop\Ticket-Booking\backend\obj\Debug\net9.0\backend.pdb
 C:\Users\dharanesh.r\Desktop\Ticket-Booking\backend\obj\Debug\net9.0\backend.genruntimeconfig.cache
 C:\Users\dharanesh.r\Desktop\Ticket-Booking\backend\obj\Debug\net9.0\ref\backend.dll
+C:\Users\dharanesh.r\Desktop\Ticket-Booking\backend\obj\Debug\net9.0\backend.sourcelink.json
